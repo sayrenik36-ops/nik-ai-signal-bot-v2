@@ -1,0 +1,2 @@
+BOT_TOKEN = "8526547710:AAH4vY4IxJBKwd1mPCDdPaEgd_s-ocZ6LEQ"
+CHAT_ID = "-100xxxxxxxxxx"
