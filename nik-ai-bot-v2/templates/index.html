@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>NIKHIL AI FOREX BOT V2.0</title>
+
+    <style>
+        body{
+            background:#101722;
+            color:white;
+            font-family:Arial;
+            margin:20px;
+        }
+
+        h1{
+            color:#00ff99;
+            text-align:center;
+        }
+
+        .cards{
+            display:flex;
+            justify-content:space-around;
+            margin:20px 0;
+        }
+
+        .card{
+            background:#1d2938;
+            padding:20px;
+            border-radius:10px;
+            width:170px;
+            text-align:center;
+            box-shadow:0 0 10px #000;
+        }
+
+        .card h2{
+            margin:0;
+            color:#00ff99;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            margin-top:20px;
+        }
+
+        th{
+            background:#26384d;
+            padding:10px;
+        }
+
+        td{
+            background:#1b2735;
+            padding:10px;
+            text-align:center;
+            border-bottom:1px solid #333;
+        }
+
+        .WIN{
+            color:#00ff66;
+            font-weight:bold;
+        }
+
+        .LOSS{
+            color:red;
+            font-weight:bold;
+        }
+
+        .DRAW{
+            color:orange;
+            font-weight:bold;
+        }
+
+        .PENDING{
+            color:yellow;
+            font-weight:bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🚀 NIKHIL AI FOREX BOT V2.0</h1>
+
+<div class="cards">
+
+<div class="card">
+<h2 id="total">0</h2>
+Signals
+</div>
+
+<div class="card">
+<h2 id="wins">0</h2>
+Wins
+</div>
+
+<div class="card">
+<h2 id="losses">0</h2>
+Losses
+</div>
+
+<div class="card">
+<h2 id="draws">0</h2>
+Draws
+</div>
+
+<div class="card">
+<h2 id="winrate">0%</h2>
+Accuracy
+</div>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>ID</th>
+<th>Pair</th>
+<th>Signal</th>
+<th>Entry</th>
+<th>Entry Time</th>
+<th>Result</th>
+<th>Status</th>
+</tr>
+
+</thead>
+
+<tbody id="tradeTable">
+
+</tbody>
+
+</table>
+
+<script>
+
+async function loadDashboard(){
+
+    const response = await fetch("/api/dashboard");
+
+    const data = await response.json();
+
+    document.getElementById("total").innerText=data.stats.total;
+    document.getElementById("wins").innerText=data.stats.wins;
+    document.getElementById("losses").innerText=data.stats.losses;
+    document.getElementById("draws").innerText=data.stats.draws;
+    document.getElementById("winrate").innerText=data.stats.winrate+"%";
+
+    let html="";
+
+    data.trades.forEach(function(t){
+
+        html+=`
+        <tr>
+            <td>${t.id}</td>
+            <td>${t.pair}</td>
+            <td>${t.signal}</td>
+            <td>${t.entry}</td>
+            <td>${t.entry_time}</td>
+            <td class="${t.result}">${t.result}</td>
+            <td class="${t.status}">${t.status}</td>
+        </tr>
+        `;
+
+    });
+
+    document.getElementById("tradeTable").innerHTML=html;
+
+}
+
+loadDashboard();
+
+setInterval(loadDashboard,5000);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,102 @@
+"""
+6=========================================================
+NIKHIL AI FOREX BOT V2.0
+Signal Manager
+=========================================================
+"""
+
+from config import MIN_AI_SCORE
+from database import db
+from services.telegram_bot import send_signal
+
+
+# Stores last signal for every pair
+last_signals = {}
+
+
+def process_signal(
+    pair,
+    signal,
+    price,
+    score,
+    reasons
+):
+    """
+    Process one AI signal.
+
+    1. Reject weak signals
+    2. Reject duplicate signals
+    3. Save to database
+    4. Send Telegram message
+    """
+
+    global last_signals
+
+    # Ignore WAIT
+    if signal == "WAIT":
+        print(f"{pair} -> WAIT")
+        return False
+
+    # Ignore low score
+    if score < MIN_AI_SCORE:
+
+        print(f"{pair} -> AI Score too low ({score})")
+
+        return False
+
+    # Prevent duplicate CALL/PUT
+    if pair in last_signals:
+
+        if last_signals[pair] == signal:
+
+            print(f"{pair} -> Duplicate Signal Skipped")
+
+            return False
+
+    # Save in database
+    signal_id = db.save_signal(
+
+    pair=pair,
+
+    signal=signal,
+
+    entry=price,
+
+    expiry=1,
+
+    ai_score=score
+
+)
+
+print(f"Database ID : {signal_id}")
+
+message_id = send_signal(
+
+    pair=pair,
+
+    signal=signal,
+
+    price=price,
+
+    score=score,
+
+    reasons=reasons
+
+)
+
+if message_id:
+
+    db.update_message_id(
+
+        signal_id,
+        mesnano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pynano services/signal_manager.pysage_id
+
+    )
+
+    print(f"Telegram Message ID : {message_id}")
+
+last_signals[pair] = signal
+
+print(f"{pair} -> Signal Sent Successfully")
+
+return True

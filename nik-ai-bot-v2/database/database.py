@@ -1,0 +1,197 @@
+"""
+=========================================================
+NIKHIL AI FOREX BOT V2.0
+Database Module
+=========================================================
+"""
+
+import sqlite3
+import os
+from datetime import datetime
+from config import DATABASE_PATH
+
+
+class Database:
+
+    def __init__(self):
+
+        os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
+
+        self.conn = sqlite3.connect(
+            DATABASE_PATH,
+            check_same_thread=False
+        )
+
+        self.conn.row_factory = sqlite3.Row
+
+        self.cursor = self.conn.cursor()
+
+        self.create_tables()
+
+    def create_tables(self):
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS signals(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            pair TEXT NOT NULL,
+
+            signal TEXT NOT NULL,
+
+            entry REAL NOT NULL,
+
+            entry_time TEXT,
+
+            expiry INTEGER,
+
+            ai_score INTEGER,
+
+            status TEXT,
+
+            exit REAL,
+
+            result TEXT,
+
+            telegram_message_id INTEGER
+        )
+        """)
+
+        self.conn.commit()
+
+    def save_signal(
+        self,
+        pair,
+        signal,
+        entry,
+        expiry,
+        ai_score
+    ):
+
+        self.cursor.execute("""
+        INSERT INTO signals(
+            pair,
+            signal,
+            entry,
+            entry_time,
+            expiry,
+            ai_score,
+            status
+        )
+        VALUES(?,?,?,?,?,?,?)
+        """, (
+            pair,
+            signal,
+            entry,
+            datetime.utcnow().isoformat(),
+            expiry,
+            ai_score,
+            "PENDING"
+        ))
+
+        self.conn.commit()
+
+        return self.cursor.lastrowid
+
+    def get_pending_signals(self):
+
+        self.cursor.execute("""
+        SELECT *
+        FROM signals
+        WHERE status='PENDING'
+        ORDER BY id ASC
+        """)
+
+        return self.cursor.fetchall()
+
+    def update_trade(
+        self,
+        signal_id,
+        exit_price,
+        result
+    ):
+
+        self.cursor.execute("""
+        UPDATE signals
+        SET
+            status='DONE',
+            exit=?,
+            result=?
+        WHERE id=?
+        """, (
+            exit_price,
+            result,
+            signal_id
+        ))
+
+        self.conn.commit()
+
+    def get_trade(self, signal_id):
+
+        self.cursor.execute("""
+        SELECT *
+        FROM signals
+        WHERE id=?
+        """, (signal_id,))
+
+        return self.cursor.fetchone()
+
+    def get_all_trades(self):
+
+        self.cursor.execute("""
+        SELECT *
+        FROM signals
+        ORDER BY id DESC
+        """)
+
+        return self.cursor.fetchall()
+
+    def statistics(self):
+
+        self.cursor.execute("SELECT COUNT(*) total FROM signals")
+        total = self.cursor.fetchone()["total"]
+
+        self.cursor.execute("SELECT COUNT(*) wins FROM signals WHERE result='WIN'")
+        wins = self.cursor.fetchone()["wins"]
+
+        self.cursor.execute("SELECT COUNT(*) loss FROM signals WHERE result='LOSS'")
+        losses = self.cursor.fetchone()["loss"]
+
+        self.cursor.execute("SELECT COUNT(*) draw FROM signals WHERE result='DRAW'")
+        draws = self.cursor.fetchone()["draw"]
+
+        winrate = 0
+
+        if total > 0:
+            winrate = round((wins / total) * 100, 2)
+
+        return {
+            "total": total,
+            "wins": wins,
+            "losses": losses,
+            "draws": draws,
+            "winrate": winrate
+        }
+
+    def update_message_id(
+        self,
+        signal_id,
+        message_id
+    ):
+
+        self.cursor.execute("""
+        UPDATE signals
+        SET telegram_message_id=?
+        WHERE id=?
+        """, (
+            message_id,
+            signal_id
+        ))
+
+        self.conn.commit()
+
+    def close(self):
+
+        self.conn.close()
+
+db = Database()
