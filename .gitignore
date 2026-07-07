@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+nik-ai-bot-v2-backup/
+
+dashboard.py
+
+*.db
+
+*.save
+
+*.swp
