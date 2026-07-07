@@ -1,79 +1,48 @@
-"""
-=========================================================
-NIKHIL AI FOREX BOT V2.0
-Technical Indicators
-=========================================================
-"""
-
-from ta.trend import EMAIndicator, MACD, ADXIndicator
-from ta.momentum import RSIIndicator
-from ta.volatility import BollingerBands, AverageTrueRange
+import pandas as pd
+import pandas_ta as ta
 
 
-def calculate_indicators(df):
+class IndicatorEngine:
 
-    close = df["close"]
-    high = df["high"]
-    low = df["low"]
-    open_price = df["open"]
+    @staticmethod
+    def calculate(df):
 
-    # EMA
-    df["ema9"] = EMAIndicator(close=close, window=9).ema_indicator()
-    df["ema21"] = EMAIndicator(close=close, window=21).ema_indicator()
-    df["ema50"] = EMAIndicator(close=close, window=50).ema_indicator()
-    df["ema200"] = EMAIndicator(close=close, window=200).ema_indicator()
+        df = df.copy()
 
-    # RSI
-    df["rsi"] = RSIIndicator(close=close, window=14).rsi()
+        # EMA
+        df["ema20"] = ta.ema(df["close"], length=20)
+        df["ema50"] = ta.ema(df["close"], length=50)
+        df["ema200"] = ta.ema(df["close"], length=200)
 
-    # MACD
-    macd = MACD(close=close)
+        # RSI
+        df["rsi"] = ta.rsi(df["close"], length=14)
 
-    df["macd"] = macd.macd()
-    df["macd_signal"] = macd.macd_signal()
-    df["macd_hist"] = macd.macd_diff()
+        # MACD
+        macd = ta.macd(df["close"])
 
-    # Bollinger
-    bb = BollingerBands(close=close)
+        df["macd"] = macd["MACD_12_26_9"]
+        df["macd_signal"] = macd["MACDs_12_26_9"]
 
-    df["bb_upper"] = bb.bollinger_hband()
-    df["bb_middle"] = bb.bollinger_mavg()
-    df["bb_lower"] = bb.bollinger_lband()
+        # ADX
+        adx = ta.adx(
+            high=df["high"],
+            low=df["low"],
+            close=df["close"]
+        )
 
-    # ATR
-    atr = AverageTrueRange(
-        high=high,
-        low=low,
-        close=close
-    )
+        df["adx"] = adx["ADX_14"]
 
-    df["atr"] = atr.average_true_range()
+        # ATR
+        df["atr"] = ta.atr(
+            high=df["high"],
+            low=df["low"],
+            close=df["close"]
+        )
 
-    # ADX
-    adx = ADXIndicator(
-        high=high,
-        low=low,
-        close=close
-    )
+        # Bollinger Bands
+        bb = ta.bbands(df["close"])
 
-    df["adx"] = adx.adx()
+        df["bb_upper"] = bb["BBU_20_2.0"]
+        df["bb_lower"] = bb["BBL_20_2.0"]
 
-    # Candle body
-    df["body"] = abs(df["close"] - df["open"])
-
-    # Trend
-    df["trend"] = "SIDEWAYS"
-
-    df.loc[
-        (df["ema9"] > df["ema21"]) &
-        (df["ema21"] > df["ema50"]),
-        "trend"
-    ] = "UP"
-
-    df.loc[
-        (df["ema9"] < df["ema21"]) &
-        (df["ema21"] < df["ema50"]),
-        "trend"
-    ] = "DOWN"
-
-    return df
+        return df

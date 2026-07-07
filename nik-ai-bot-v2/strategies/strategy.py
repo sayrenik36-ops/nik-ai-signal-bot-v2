@@ -1,118 +1,51 @@
-"""
-=========================================================
-NIKHIL AI FOREX BOT V2.0
-AI Strategy Engine
-=========================================================
-"""
+class Strategy:
 
-from config import MIN_AI_SCORE
+    @staticmethod
+    def analyse(df):
 
+        last = df.iloc[-1]
 
-def get_signal(df):
+        score_buy = 0
+        score_sell = 0
 
-    latest = df.iloc[-1]
+        # EMA Trend
+        if last["ema20"] > last["ema50"] > last["ema200"]:
+            score_buy += 20
 
-    score = 0
+        if last["ema20"] < last["ema50"] < last["ema200"]:
+            score_sell += 20
 
-    reasons = []
+        # RSI
+        if last["rsi"] < 35:
+            score_buy += 20
 
-    buy = 0
+        if last["rsi"] > 65:
+            score_sell += 20
 
-    sell = 0
+        # MACD
+        if last["macd"] > last["macd_signal"]:
+            score_buy += 20
 
-    # ==========================
-    # EMA Trend
-    # ==========================
+        if last["macd"] < last["macd_signal"]:
+            score_sell += 20
 
-    if latest["ema9"] > latest["ema21"] > latest["ema50"]:
+        # ADX
+        if last["adx"] > 25:
+            score_buy += 20
+            score_sell += 20
 
-        buy += 25
-        reasons.append("EMA Bullish")
+        # Bollinger Bands
+        if last["close"] < last["bb_lower"]:
+            score_buy += 20
 
-    elif latest["ema9"] < latest["ema21"] < latest["ema50"]:
+        if last["close"] > last["bb_upper"]:
+            score_sell += 20
 
-        sell += 25
-        reasons.append("EMA Bearish")
+        if score_buy >= score_sell:
+            signal = "BUY"
+            score = score_buy
+        else:
+            signal = "SELL"
+            score = score_sell
 
-    # ==========================
-    # RSI
-    # ==========================
-
-    if latest["rsi"] < 30:
-
-        buy += 20
-        reasons.append("RSI Oversold")
-
-    elif latest["rsi"] > 70:
-
-        sell += 20
-        reasons.append("RSI Overbought")
-
-    # ==========================
-    # MACD
-    # ==========================
-
-    if latest["macd"] > latest["macd_signal"]:
-
-        buy += 20
-        reasons.append("MACD Bullish")
-
-    else:
-
-        sell += 20
-        reasons.append("MACD Bearish")
-
-    # ==========================
-    # ADX
-    # ==========================
-
-    if latest["adx"] > 25:
-
-        if buy > sell:
-
-            buy += 15
-            reasons.append("Strong Up Trend")
-
-        elif sell > buy:
-
-            sell += 15
-            reasons.append("Strong Down Trend")
-
-    # ==========================
-    # Bollinger Bands
-    # ==========================
-
-    if latest["close"] <= latest["bb_lower"]:
-
-        buy += 10
-        reasons.append("Lower Bollinger")
-
-    elif latest["close"] >= latest["bb_upper"]:
-
-        sell += 10
-        reasons.append("Upper Bollinger")
-
-    # ==========================
-    # Final Decision
-    # ==========================
-
-    if buy > sell:
-
-        signal = "CALL"
-        score = buy
-
-    elif sell > buy:
-
-        signal = "PUT"
-        score = sell
-
-    else:
-
-        signal = "WAIT"
-        score = 0
-
-    if score < MIN_AI_SCORE:
-
-        signal = "WAIT"
-
-    return signal, score, reasons
+        return signal, score
